@@ -1,0 +1,6 @@
+api_descriptors:
+  bws_cache:
+    config:
+      org_id: test
+      token: test
+  bws_cache_generic:
