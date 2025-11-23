@@ -15,11 +15,26 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: astral-sh/ruff-action@v3
+      # TODO: Use this instead of everything that follows once version parsing issue is resolved:
+      # https://github.com/astral-sh/ruff-action/issues/256
+      # - uses: astral-sh/ruff-action@v3
 
-      - uses: astral-sh/ruff-action@v3
+      # - uses: astral-sh/ruff-action@v3
+      #   with:
+      #     args: format --diff
+
+      - run: pipx install poetry
+
+      - uses: actions/setup-python@v6
         with:
-          args: format --diff
+          python-version: '3.x'
+          cache: 'poetry'
+
+      - run: poetry install --no-interaction
+
+      - run: poetry run ruff check --output-format=github
+
+      - run: poetry run ruff format --diff
 
   test:
     runs-on: ubuntu-latest
