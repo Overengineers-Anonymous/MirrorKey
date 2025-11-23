@@ -1,12 +1,10 @@
-from core.plugins import plugin_loader, config
-from shatter_api import route_map, WsgiDispatcher
+from pathlib import Path
+
+from core import api_builder
+from core.config.loader import LoadedConfig
+from fastapi import FastAPI
+
+config = LoadedConfig.from_yaml(Path("mirrorkey.yml"))
 
 
-config.load_config("mirrorkey.yml")
-plugin_loader.load()
-
-api = WsgiDispatcher(route_map)
-
-
-
-
+api = api_builder.build(FastAPI(), config)
