@@ -87,7 +87,6 @@ coverage.xml
 ############################################
 .DS_Store
 .idea/
-.vscode/
 *.swp
 *.swo
 
