@@ -46,7 +46,7 @@ jobs:
 
       - uses: MishaKav/pytest-coverage-comment@v1
         with:
-          pytest-coverage-path: coverage.xml
+          pytest-xml-coverage-path: coverage.xml
           junitxml-path: junit/test-results.xml
 
       - name: Upload pytest results
