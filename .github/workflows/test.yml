@@ -15,18 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - run: pipx install poetry
+      - uses: astral-sh/ruff-action@v3
 
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/ruff-action@v3
         with:
-          python-version: '3.x'
-          cache: 'poetry'
-
-      - run: poetry install --no-interaction
-
-      - run: poetry run ruff check --output-format=github
-
-      - run: poetry run ruff format --diff
+          args: format --diff
 
   test:
     runs-on: ubuntu-latest
