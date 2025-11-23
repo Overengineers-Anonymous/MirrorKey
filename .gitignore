@@ -1,2 +1,116 @@
-__pycache__
-.pytest_cache
+############################################
+# Python build / cache artifacts
+############################################
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+############################################
+# Distribution / packaging
+############################################
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+*.egg
+MANIFEST
+
+############################################
+# Virtual environments
+############################################
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+.env.bak/
+.conda/
+
+############################################
+# Installer logs
+############################################
+pip-log.txt
+pip-delete-this-directory.txt
+
+############################################
+# Unit test / coverage reports
+############################################
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.tox/
+.nox/
+.cache/
+.pytest_cov/
+.coverage
+############################################
+# Type check / lint / analysis caches
+############################################
+.mypy_cache/
+.ruff_cache/
+.pylint.d/
+.pyre/
+.pytype/
+
+############################################
+# Jupyter Notebook
+############################################
+.ipynb_checkpoints/
+
+############################################
+# Logs & runtime artifacts
+############################################
+*.log
+*.sqlite3
+
+############################################
+# OS / Editor specific
+############################################
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+############################################
+# Environment / secrets (adjust as needed)
+############################################
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+############################################
+# Misc
+############################################
+profile_default/
+__pypackages__/
+.benchmarks/
+
+############################################
+# Project specific exclusions
+# (Keep config YAML tracked; do NOT ignore mirrorkey.yml)
+############################################
+# Add any additional project-specific ignores below:
+# /server/temp/
+

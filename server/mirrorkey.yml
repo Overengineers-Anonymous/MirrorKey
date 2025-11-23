@@ -1,0 +1,5 @@
+plugins:
+  bws_secret:
+    config:
+      write_enabled: false
+
