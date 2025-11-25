@@ -45,14 +45,14 @@ trio = ["trio (>=0.31.0)"]
 
 [[package]]
 name = "bws-sdk"
-version = "1.3.0"
+version = "1.3.1"
 description = "pure python implimentation of the bw secrets api"
 optional = false
 python-versions = "<3.14.0,>=3.11.0"
 groups = ["main"]
 files = [
-    {file = "bws_sdk-1.3.0-py3-none-any.whl", hash = "sha256:94b699922080c0054cbf798f30588442bb78e0dbf0c24bf593e721f7febfcf9b"},
-    {file = "bws_sdk-1.3.0.tar.gz", hash = "sha256:0179533bbed75a97b9db4506f8bb57fdce275bc3e9a80a70c361fb9115710ea8"},
+    {file = "bws_sdk-1.3.1-py3-none-any.whl", hash = "sha256:bbb2edc545cacccf3cc97173cfa35e7ffca37dafe6859eaa182cc16322f897dc"},
+    {file = "bws_sdk-1.3.1.tar.gz", hash = "sha256:46837fe85469319b03961e7b015487cbf048975355283aeb6c6e478f170a1b54"},
 ]
 
 [package.dependencies]
@@ -1185,4 +1185,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "1c212285f38c96a601bd08dc8fe28867445557a170f134a7d2fb39f62c1aa462"
+content-hash = "faa07a1511540dacffceaf9dd09468c7b81901b5c7cfccf863ef23928c09fff9"
