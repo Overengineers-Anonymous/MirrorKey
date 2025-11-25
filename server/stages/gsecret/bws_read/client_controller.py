@@ -27,9 +27,10 @@ class BwsClient:
     def populate_kv_cache(self):
         """Populate the key-value cache from existing secrets."""
         secrets = self.client.sync(datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc))
-        with self.kv_lock:
-            for secret in secrets:
-                self.kv_translater[secret.key] = secret.id
+        if secrets is not None:
+            with self.kv_lock:
+                for secret in secrets:
+                    self.kv_translater[secret.key] = secret.id
         self.sync_thread.start()
 
     @classmethod
@@ -46,8 +47,10 @@ class BwsClient:
             self.sync_callbacks.append(callback)
             self.sync_all.append(callback)
 
-    def get_by_id(self, key_id: str) -> Secret:
+    def get_by_id(self, key_id: str) -> Secret | None:
         bw_secret = self.client.get_by_id(key_id)
+        if not bw_secret:
+            return None
         return Secret(
             key_id=bw_secret.id,
             key=bw_secret.key,
@@ -72,8 +75,11 @@ class BwsClient:
             )
         return native_secrets
 
-    def _sync(self, last_sync: datetime.datetime) -> list[BitwardenSecret]:
+    def _sync(self, last_sync: datetime.datetime) -> list[BitwardenSecret] | None:
         secrets = self.client.sync(last_sync)
+        if secrets is None:
+            return None
+
         with self.kv_lock:
             for secret in secrets:
                 self.kv_translater[secret.key] = secret.id
@@ -84,14 +90,19 @@ class BwsClient:
             with self.sync_lock:
                 new_callbacks = self.sync_all.copy()
                 self.sync_all = []
-            for callback in new_callbacks:
+            if new_callbacks:
                 secrets = self._sync(datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc))
-                callback(self.token_hash, self._convert_secrets(secrets))
+                if secrets is None:
+                    continue # Skip if no sync data
+                for callback in new_callbacks:
+                    callback(self.token_hash, self._convert_secrets(secrets))
                 time.sleep(self.sync_delay)
 
             now = datetime.datetime.now(tz=datetime.timezone.utc)
             secrets = self._sync(self.last_sync)
             self.last_sync = now
+            if secrets is None:
+                continue  # Skip if no sync data
             for callback in self.sync_callbacks:
                 callback(self.token_hash, self._convert_secrets(secrets))
             time.sleep(self.sync_delay)

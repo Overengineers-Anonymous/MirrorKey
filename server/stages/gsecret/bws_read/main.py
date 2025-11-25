@@ -50,13 +50,10 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         """Retrieve a secret by its ID from Bitwarden"""
         try:
             client = self.client_controller.get_client(token, self.region, self.secrets_sync)
-            return client.get_by_id(key_id)
-        except SecretNotFoundError:
-            # Try next executor in chain if secret not found
-            executor = next.next()
-            if executor:
-                return executor.get_secret_id(key_id, token, next)
-            return GsecretFailure(reason="Secret not found", code=404)
+            secret = client.get_by_id(key_id)
+            if secret is not None:
+                return secret
+
         except UnauthorisedError:
             return GsecretFailure(reason="Unauthorized access", code=401)
         except APIRateLimitError:
@@ -65,6 +62,11 @@ class BwsReadGSecretExecutor(GSecretExecutor):
             return GsecretFailure(reason=f"API error: {e!s}", code=500)
         except Exception as e:
             return GsecretFailure(reason=f"Unexpected error: {e!s}", code=500)
+
+        executor = next.next()
+        if executor:
+            return executor.get_secret_id(key_id, token, next)
+        return GsecretFailure(reason="Secret not found", code=404)
 
     def get_secret_key(self, key: str, token: Token, next: ForwardChainExecutor["GSecretExecutor"]) -> Secret | GsecretFailure:
         """
