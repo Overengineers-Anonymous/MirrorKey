@@ -22,10 +22,6 @@ class Secret(BaseModel):
     secret: Any | str
     rate_limit: RateLimit | None = None
 
-class SecretList(BaseModel):
-    secrets: list[Secret]
-    rate_limit: RateLimit | None = None
-
 class WriteSecret(BaseModel):
     key: str
     secret: Any | str
@@ -61,7 +57,7 @@ class GSecretExecutor(ChainStage, Protocol):
     # reverse chain methods
 
     def secret_updated(
-        self, test: str, token_hash: TokenID, next: ReverseChainExecutor["GSecretExecutor"]
+        self, secrets: list[Secret], token_hash: TokenID, priority: int, next: ReverseChainExecutor["GSecretExecutor"]
     ): ...
 
 
