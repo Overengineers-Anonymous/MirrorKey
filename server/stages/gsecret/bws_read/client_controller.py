@@ -16,11 +16,10 @@ class ApiRateLimiter:
         self.rate_limit_max: int = 0
         self.rate_limit_window: int = 0
         self.rate_limit_remaining: int = 0
-        self.rate_limit_reset: datetime.datetime | None = None
 
     def delay(self) -> None:
         """delay needed to avoid rate limiting."""
-        if self.rate_limit_max == 0 or self.rate_limit_window == 0:
+        if self.rate_limit_max == 0:
             return
         time.sleep(self.rate_limit_window / (self.rate_limit_max/5)) # 20% buffer
 
@@ -36,7 +35,7 @@ class ApiRateLimiter:
                 return 0
 
     def trigger(self, window: str, remaining: int, reset: datetime.datetime):
-        if self.rate_limit_reset is None or datetime.datetime.now(tz=datetime.timezone.utc) >= self.rate_limit_reset:
+        if remaining >= self.rate_limit_remaining:
             self.rate_limit_max = remaining+1
             self.rate_limit_window = self._rt_window_seconds(window)
             self.rate_limit_reset = reset
