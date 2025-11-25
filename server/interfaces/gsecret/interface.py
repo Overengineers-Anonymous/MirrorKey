@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 from typing import Any, Protocol
 
@@ -14,7 +15,7 @@ class GsecretFailure(BaseModel):
 class RateLimit(BaseModel):
     limit: int
     remaining: int
-    reset: int
+    reset: datetime.datetime
 
 class Secret(BaseModel):
     key_id: str

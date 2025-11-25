@@ -4,12 +4,43 @@ import time
 from typing import Protocol
 
 from bws_sdk import BWSecretClient, BitwardenSecret, Region
-from interfaces.gsecret import Secret, Token, TokenID
+from bws_sdk.bws_types import BitwardenSync
+from interfaces.gsecret import RateLimit, Secret, Token, TokenID
 
 
 class SyncCallback(Protocol):
     def __call__(self, token_hash: TokenID, secrets: list[Secret]) -> None: ...
 
+class ApiRateLimiter:
+    def __init__(self):
+        self.rate_limit_max: int = 0
+        self.rate_limit_window: int = 0
+        self.rate_limit_remaining: int = 0
+        self.rate_limit_reset: datetime.datetime | None = None
+
+    def delay(self) -> None:
+        """delay needed to avoid rate limiting."""
+        if self.rate_limit_max == 0 or self.rate_limit_window == 0:
+            return
+        time.sleep(self.rate_limit_window / (self.rate_limit_max/5)) # 20% buffer
+
+    def _rt_window_seconds(self, window: str) -> int:
+        match (window[:-1], window[-1]):
+            case [int(x), "s"]:
+                return x*1
+            case [int(x), "m"]:
+                return x*60
+            case [int(x), "h"]:
+                return x*3600
+            case _:
+                return 0
+
+    def trigger(self, window: str, remaining: int, reset: datetime.datetime):
+        if self.rate_limit_reset is None or datetime.datetime.now(tz=datetime.timezone.utc) >= self.rate_limit_reset:
+            self.rate_limit_max = remaining+1
+            self.rate_limit_window = self._rt_window_seconds(window)
+            self.rate_limit_reset = reset
+        self.rate_limit_remaining = remaining
 
 class BwsClient:
     def __init__(self, client: BWSecretClient, token_hash: TokenID):
@@ -24,13 +55,12 @@ class BwsClient:
         self.kv_lock = Lock()
         self.kv_translater: dict[str, str] = {}
 
+        self.sync_rate_limiter = ApiRateLimiter()
+        self.id_rate_limiter = ApiRateLimiter()
+
     def populate_kv_cache(self):
         """Populate the key-value cache from existing secrets."""
-        secrets = self.client.sync(datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc))
-        if secrets is not None:
-            with self.kv_lock:
-                for secret in secrets:
-                    self.kv_translater[secret.key] = secret.id
+        self._sync(datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc))
         self.sync_thread.start()
 
     @classmethod
@@ -40,7 +70,10 @@ class BwsClient:
             region=region,
             access_token=access_token.token,
         )
-        return cls(client=client, token_hash=token_hash)
+
+        bwclient = cls(client=client, token_hash=token_hash)
+        bwclient.populate_kv_cache()
+        return bwclient
 
     def ensure_callback(self, callback: SyncCallback):
         if callback not in self.sync_callbacks:
@@ -51,10 +84,20 @@ class BwsClient:
         bw_secret = self.client.get_by_id(key_id)
         if not bw_secret:
             return None
+        self.id_rate_limiter.trigger(
+            window=bw_secret.ratelimit.limit,
+            remaining=bw_secret.ratelimit.remaining,
+            reset=bw_secret.ratelimit.reset,
+        )
         return Secret(
             key_id=bw_secret.id,
             key=bw_secret.key,
             secret=bw_secret.value,
+            rate_limit=RateLimit(
+                limit=self.id_rate_limiter.rate_limit_max,
+                remaining=self.id_rate_limiter.rate_limit_remaining,
+                reset=self.id_rate_limiter.rate_limit_reset or datetime.datetime.now(tz=datetime.timezone.utc)
+            )
         )
 
     def get_by_key(self, key: str) -> Secret | None:
@@ -63,9 +106,11 @@ class BwsClient:
             return None
         return self.get_by_id(secret_id)
 
-    def _convert_secrets(self, secrets: list[BitwardenSecret]) -> list[Secret]:
+    def _convert_secrets(self, secrets: BitwardenSync) -> list[Secret]:
         native_secrets: list[Secret] = []
-        for secret in secrets:
+        if secrets.secrets is None:
+            return native_secrets
+        for secret in secrets.secrets:
             native_secrets.append(
                 Secret(
                     key_id=secret.id,
@@ -75,17 +120,27 @@ class BwsClient:
             )
         return native_secrets
 
-    def _sync(self, last_sync: datetime.datetime) -> list[BitwardenSecret] | None:
+
+
+    def _sync(self, last_sync: datetime.datetime) -> BitwardenSync | None:
         secrets = self.client.sync(last_sync)
-        if secrets is None:
+        self.sync_rate_limiter.trigger(
+            window=secrets.ratelimit.limit,
+            remaining=secrets.ratelimit.remaining,
+            reset=secrets.ratelimit.reset,
+        )
+        if secrets.secrets is None:
             return None
 
         with self.kv_lock:
-            for secret in secrets:
+            for secret in secrets.secrets:
                 self.kv_translater[secret.key] = secret.id
         return secrets
 
+
+
     def _sync_loop(self):
+        self.sync_rate_limiter.delay()
         while True:
             with self.sync_lock:
                 new_callbacks = self.sync_all.copy()
@@ -96,7 +151,8 @@ class BwsClient:
                     continue # Skip if no sync data
                 for callback in new_callbacks:
                     callback(self.token_hash, self._convert_secrets(secrets))
-                time.sleep(self.sync_delay)
+                self.sync_rate_limiter.delay()
+
 
             now = datetime.datetime.now(tz=datetime.timezone.utc)
             secrets = self._sync(self.last_sync)
@@ -105,7 +161,7 @@ class BwsClient:
                 continue  # Skip if no sync data
             for callback in self.sync_callbacks:
                 callback(self.token_hash, self._convert_secrets(secrets))
-            time.sleep(self.sync_delay)
+            self.sync_rate_limiter.delay()
 
 
 class BwsClientController:
@@ -130,7 +186,6 @@ class BwsClientController:
                 region=region,
                 access_token=token,
             )
-            self._client_cache[token_hash].populate_kv_cache()
             self._region_map[token_hash] = self._get_region_key(region)
 
         client = self._client_cache[token_hash]
