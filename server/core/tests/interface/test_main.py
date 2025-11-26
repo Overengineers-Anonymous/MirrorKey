@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
-from core.interface.main import Interface
+
+import pytest
+
 from core.chain.chain import ChainStageBuilder
+from core.interface.main import Interface
 
 
 class TestInterface:
@@ -71,7 +73,9 @@ class TestInterface:
         assert interface.stages["stage2"] is builder2
         assert interface.stages["stage3"] is builder3
 
-    def test_register_stage_duplicate_name_raises_error(self, interface, mock_stage_builder):
+    def test_register_stage_duplicate_name_raises_error(
+        self, interface, mock_stage_builder
+    ):
         """Test that registering a stage with duplicate name raises ValueError."""
         interface.register_stage("duplicate", mock_stage_builder)
 
@@ -89,7 +93,9 @@ class TestInterface:
         with pytest.raises(TypeError) as exc_info:
             interface.register_stage("invalid", not_a_builder)
 
-        assert "Stage must be an instance of the specified ChainStage protocol" in str(exc_info.value)
+        assert "Stage must be an instance of the specified ChainStage protocol" in str(
+            exc_info.value
+        )
 
     def test_stages_is_mutable(self, interface, mock_stage_builder):
         """Test that stages dict is accessible and mutable through registration."""

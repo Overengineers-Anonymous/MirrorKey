@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from core.importer import Importer
+
+import pytest
+
 from core.api.manager import APIPluginManager
+from core.importer import Importer
 
 
 class TestImporter:
@@ -108,5 +110,7 @@ class TestImporter:
             with pytest.raises(ImportError) as exc_info:
                 importer.import_stage_plugin("test_api", "test_stage")
 
-            assert "Stage 'test_stage' for API 'test_api' failed to register" in str(exc_info.value)
+            assert "Stage 'test_stage' for API 'test_api' failed to register" in str(
+                exc_info.value
+            )
             assert "stages.test_api.test_stage" in str(exc_info.value)

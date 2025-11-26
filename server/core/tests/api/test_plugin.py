@@ -1,10 +1,11 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 from fastapi import APIRouter
+
 from core.api.plugin import APIPlugin
 from core.chain.controller import ChainController
 from core.interface.main import Interface
-from core.chain.chain import ChainStage
 
 
 class TestAPIPlugin:
@@ -49,7 +50,9 @@ class TestAPIPlugin:
             router=mock_router,
         )
 
-    def test_init(self, mock_chain_controller, mock_interface, mock_router, mock_stage_class):
+    def test_init(
+        self, mock_chain_controller, mock_interface, mock_router, mock_stage_class
+    ):
         """Test APIPlugin initialization."""
         plugin = APIPlugin(
             name="test_plugin",
@@ -91,7 +94,9 @@ class TestAPIPlugin:
         assert "stage1" in stages
         assert "stage2" in stages
 
-    def test_properties_reflect_controller_changes(self, mock_chain_controller, mock_interface, mock_router):
+    def test_properties_reflect_controller_changes(
+        self, mock_chain_controller, mock_interface, mock_router
+    ):
         """Test that properties reflect changes in underlying objects."""
         plugin = APIPlugin(
             name="dynamic_test",
@@ -106,7 +111,9 @@ class TestAPIPlugin:
 
         assert plugin.stage_class is new_stage_class
 
-    def test_properties_reflect_interface_changes(self, mock_chain_controller, mock_interface, mock_router):
+    def test_properties_reflect_interface_changes(
+        self, mock_chain_controller, mock_interface, mock_router
+    ):
         """Test that properties reflect changes in interface."""
         plugin = APIPlugin(
             name="dynamic_test",

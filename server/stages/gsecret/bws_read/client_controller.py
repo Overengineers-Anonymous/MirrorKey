@@ -11,6 +11,7 @@ from interfaces.gsecret import RateLimit, Secret, Token, TokenID, UpdatedSecret
 class SyncCallback(Protocol):
     def __call__(self, token_hash: TokenID, secrets: list[UpdatedSecret]) -> None: ...
 
+
 class ApiRateLimiter:
     def __init__(self):
         self.max: int = 0
@@ -22,26 +23,27 @@ class ApiRateLimiter:
         """delay needed to avoid rate limiting."""
         if self.max == 0:
             return
-        time.sleep(self.window / (self.max*0.8)) # 80% buffer
+        time.sleep(self.window / (self.max * 0.8))  # 80% buffer
 
     def _rt_window_seconds(self, window: str) -> int:
         match (int(window[:-1]), window[-1]):
             case (x, "s"):
-                return x*1
+                return x * 1
             case (x, "m"):
-                return x*60
+                return x * 60
             case (x, "h"):
-                return x*3600
+                return x * 3600
             case _:
                 return 0
 
     def trigger(self, window: str, remaining: int):
         if remaining >= self.remaining:
-            self.max = remaining+1
+            self.max = remaining + 1
             self.window = self._rt_window_seconds(window)
             now = datetime.datetime.now(tz=datetime.timezone.utc)
             self.reset = now + datetime.timedelta(seconds=self.window)
         self.remaining = remaining
+
 
 class BwsClient:
     def __init__(self, client: BWSecretClient, token_hash: TokenID):
@@ -101,7 +103,7 @@ class BwsClient:
                 remaining=rate_limiter.remaining,
                 reset=rate_limiter.reset,
                 api_relation=f"bws_read:id:{bw_secret.id}",
-            )
+            ),
         )
 
     def get_by_key(self, key: str) -> Secret | None:
@@ -158,13 +160,14 @@ class BwsClient:
                 new_callbacks = self.sync_all.copy()
                 self.sync_all = []
             if new_callbacks:
-                secrets = self._sync(datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc))
+                secrets = self._sync(
+                    datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc)
+                )
                 if secrets is None:
-                    continue # Skip if no sync data
+                    continue  # Skip if no sync data
                 for callback in new_callbacks:
                     callback(self.token_hash, self._convert_secrets(secrets))
                 self.sync_rate_limiter.delay()
-
 
             now = datetime.datetime.now(tz=datetime.timezone.utc)
             secrets = self._sync(self.last_sync)
@@ -186,7 +189,9 @@ class BwsClientController:
     def _get_region_key(self, region: Region) -> str:
         return f"{region.api_url}|{region.identity_url}"
 
-    def get_client(self, token: Token, region: Region, sync_callback: SyncCallback) -> BwsClient:
+    def get_client(
+        self, token: Token, region: Region, sync_callback: SyncCallback
+    ) -> BwsClient:
         """
         Get a BWS client for the given token.
         Returns cached client if available, otherwise creates a new one.

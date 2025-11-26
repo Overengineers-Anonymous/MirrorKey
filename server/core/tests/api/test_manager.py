@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from core.api.manager import APIPluginManager
 from core.api.plugin import APIPlugin
 
@@ -44,7 +46,9 @@ class TestAPIPluginManager:
         with pytest.raises(ValueError) as exc_info:
             manager.register_plugin(duplicate_plugin)
 
-        assert "API with name 'test_plugin' is already registered" in str(exc_info.value)
+        assert "API with name 'test_plugin' is already registered" in str(
+            exc_info.value
+        )
 
     def test_register_multiple_plugins(self, manager):
         """Test registering multiple plugins with different names."""

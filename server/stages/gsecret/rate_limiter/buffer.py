@@ -1,8 +1,7 @@
 import datetime
+import time
 from enum import Enum
 from threading import Event, Lock, Thread
-import time
-from queue import Empty, Queue
 
 from pydantic import BaseModel
 
@@ -70,11 +69,15 @@ class BufferedStageClient:
         self.controller.add_api_delay(api_name, api_delay)
         api_delay.wait()
 
-    def log_key_rate_limit(self, secret_key: str, api_id: str, rate_limit: BufferRateLimits):
+    def log_key_rate_limit(
+        self, secret_key: str, api_id: str, rate_limit: BufferRateLimits
+    ):
         self.register_key_api_map(secret_key, api_id)
         self.controller.log_rate_limit(api_id, rate_limit)
 
-    def log_id_rate_limit(self, secret_id: str, api_id: str, rate_limit: BufferRateLimits):
+    def log_id_rate_limit(
+        self, secret_id: str, api_id: str, rate_limit: BufferRateLimits
+    ):
         self.register_id_api_map(secret_id, api_id)
         self.controller.log_rate_limit(api_id, rate_limit)
 

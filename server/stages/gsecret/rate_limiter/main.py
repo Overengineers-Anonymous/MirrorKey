@@ -1,7 +1,5 @@
 from typing import Any
 
-from pydantic import BaseModel
-
 from core.chain.chain import ChainStageBuilder
 from core.chain.controller import Chain, ForwardChainExecutor, ReverseChainExecutor
 from interfaces.gsecret import (
@@ -14,8 +12,9 @@ from interfaces.gsecret import (
     WriteSecret,
     gsecret_interface,
 )
+from pydantic import BaseModel
 
-from .buffer import BufferController, BufferDelay, BufferDelay, BufferRateLimits, BufferedStageClient
+from .buffer import BufferController, BufferDelay, BufferedStageClient, BufferRateLimits
 
 
 class RateLimiterConfig(BaseModel):
@@ -56,7 +55,9 @@ class RateLimiterGSecretExecutor(GSecretExecutor):
             return secret
         return GsecretFailure(reason="No executor available", code=500)
 
-    def get_secret_key(self, key: str, token: Token, next: ForwardChainExecutor["GSecretExecutor"]) -> Secret | GsecretFailure:
+    def get_secret_key(
+        self, key: str, token: Token, next: ForwardChainExecutor["GSecretExecutor"]
+    ) -> Secret | GsecretFailure:
         """Retrieve a secret by key with rate limiting"""
         delay = BufferDelay(timeout=self.config.timeout)
         self.stage_client.key_delay(key, delay)
@@ -76,7 +77,10 @@ class RateLimiterGSecretExecutor(GSecretExecutor):
         return GsecretFailure(reason="No executor available", code=500)
 
     def write_secret(
-        self, secret: WriteSecret, token: Token, next: ForwardChainExecutor["GSecretExecutor"]
+        self,
+        secret: WriteSecret,
+        token: Token,
+        next: ForwardChainExecutor["GSecretExecutor"],
     ) -> Secret | GsecretFailure:
         """Write a secret with rate limiting"""
 
@@ -96,9 +100,13 @@ class RateLimiterGSecretExecutor(GSecretExecutor):
         # Secret updates from downstream should not be rate limited
         for secret in secrets:
             if secret.api_id_relation:
-                self.stage_client.register_id_api_map(secret.key_id, secret.api_id_relation)
+                self.stage_client.register_id_api_map(
+                    secret.key_id, secret.api_id_relation
+                )
             if secret.api_key_relation:
-                self.stage_client.register_key_api_map(secret.key, secret.api_key_relation)
+                self.stage_client.register_key_api_map(
+                    secret.key, secret.api_key_relation
+                )
 
         executor = next.next()
         if executor:
@@ -115,8 +123,12 @@ class RateLimiterGSecretStageBuilder(ChainStageBuilder[GSecretExecutor]):
         if config is None:
             config = {}
         rate_limiter_config = RateLimiterConfig(**config)
-        stage_controller = BufferedStageClient(self.controller, default_delay=rate_limiter_config.default_delay)
-        return RateLimiterGSecretExecutor(stage_client=stage_controller, config=rate_limiter_config)
+        stage_controller = BufferedStageClient(
+            self.controller, default_delay=rate_limiter_config.default_delay
+        )
+        return RateLimiterGSecretExecutor(
+            stage_client=stage_controller, config=rate_limiter_config
+        )
 
 
 # Register the stage builder with the gsecret interface
