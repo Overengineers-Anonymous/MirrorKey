@@ -15,6 +15,7 @@ from interfaces.gsecret import (
     Secret,
     Token,
     TokenID,
+    UpdatedSecret,
     WriteSecret,
     gsecret_interface,
 )
@@ -110,15 +111,15 @@ class BwsReadGSecretExecutor(GSecretExecutor):
             return executor.write_secret(secret, token, next)
         return GsecretFailure(reason="Write operations not supported in BWS read-only mode", code=501)
 
-    def secrets_sync(self, token_hash: TokenID, secrets: list[Secret]):
+    def secrets_sync(self, token_hash: TokenID, secrets: list[UpdatedSecret]):
         print("Syncing secrets update notification...", len(secrets))
-        chain_controller = ReverseChainExecutor(self.chain)
+        chain_controller = ReverseChainExecutor(self.chain, self.chain.get_stage_index(self))
         executor = chain_controller.next()
         if executor:
             executor.secret_updated(secrets, token_hash, self.chain.get_stage_index(self), chain_controller)
 
     def secret_updated(
-        self, secrets: list[Secret], token_hash: TokenID, priority: int, next: ReverseChainExecutor["GSecretExecutor"]
+        self, secrets: list[UpdatedSecret], token_hash: TokenID, priority: int, next: ReverseChainExecutor["GSecretExecutor"]
     ):
         """Handle secret update notifications in reverse chain"""
         # For read-only mode, we don't need to handle updates

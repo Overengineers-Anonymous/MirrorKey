@@ -5,6 +5,7 @@ from .interface import (
     Secret,
     Token,
     TokenID,
+    UpdatedSecret,
     WriteSecret,
     gsecret_interface,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "Secret",
     "Token",
     "TokenID",
+    "UpdatedSecret",
     "WriteSecret",
     "gsecret_interface",
 ]
