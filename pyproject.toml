@@ -6,7 +6,7 @@ authors = [
     {name = "ripple",email = "github@ripple.contact"}
 ]
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = "==3.13.*"
 dependencies = [
     "fastapi (>=0.121.2,<0.122.0)",
     "pydantic (>=2.12.4,<3.0.0)",
