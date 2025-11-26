@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from core.chain.chain import Chain
 from core.chain.controller import (
     ChainController,
@@ -52,11 +54,11 @@ class TestChainExecutor:
         executor = ChainExecutor(chain_with_stages)
 
         stage0 = executor.next()
-        assert stage0.name == "stage0"
+        assert stage0.name == "stage0"  # type: ignore
         assert executor.current_index == 1
 
         stage1 = executor.next()
-        assert stage1.name == "stage1"
+        assert stage1.name == "stage1"  # type: ignore
         assert executor.current_index == 2
 
     def test_next_returns_none_at_end(self, chain_with_stages):
@@ -71,11 +73,11 @@ class TestChainExecutor:
         executor = ChainExecutor(chain_with_stages, current_index=4, reverse=True)
 
         stage4 = executor.next()
-        assert stage4.name == "stage4"
+        assert stage4.name == "stage4"  # type: ignore
         assert executor.current_index == 3
 
         stage3 = executor.next()
-        assert stage3.name == "stage3"
+        assert stage3.name == "stage3"  # type: ignore
         assert executor.current_index == 2
 
     def test_next_reverse_returns_none_at_start(self, chain_with_stages):
@@ -253,7 +255,9 @@ class TestChainController:
         with pytest.raises(TypeError) as exc_info:
             controller.add_chain(wrong_chain)
 
-        assert "Chain's state_class must be a subclass of the executor_class" in str(exc_info.value)
+        assert "Chain's state_class must be a subclass of the executor_class" in str(
+            exc_info.value
+        )
 
     def test_add_multiple_chains(self, controller, stage_class):
         """Test adding multiple chains."""

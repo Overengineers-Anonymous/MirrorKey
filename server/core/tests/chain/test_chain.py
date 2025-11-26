@@ -1,5 +1,6 @@
 import pytest
-from core.chain.chain import Chain, ChainStage
+
+from core.chain.chain import Chain
 
 
 class TestChain:
@@ -64,7 +65,9 @@ class TestChain:
         with pytest.raises(TypeError) as exc_info:
             chain.add_stage(wrong_stage)
 
-        assert "Stage must be an instance of the specified ChainStage protocol" in str(exc_info.value)
+        assert "Stage must be an instance of the specified ChainStage protocol" in str(
+            exc_info.value
+        )
 
     def test_get_stages_by_index(self, chain, stage_class):
         """Test getting a stage by index."""

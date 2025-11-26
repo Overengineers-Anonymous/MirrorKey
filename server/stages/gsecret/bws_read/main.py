@@ -34,7 +34,12 @@ class BwsReadConfig(BaseModel):
 class BwsReadGSecretExecutor(GSecretExecutor):
     """Read-only Bitwarden Secrets Manager executor using bws-sdk"""
 
-    def __init__(self, config: BwsReadConfig, controller: BwsClientController, chain: Chain[GSecretExecutor]):
+    def __init__(
+        self,
+        config: BwsReadConfig,
+        controller: BwsClientController,
+        chain: Chain[GSecretExecutor],
+    ):
         self.config = config
         self.chain = chain
         self.client_controller = controller
@@ -50,7 +55,9 @@ class BwsReadGSecretExecutor(GSecretExecutor):
     ) -> Secret | GsecretFailure:
         """Retrieve a secret by its ID from Bitwarden"""
         try:
-            client = self.client_controller.get_client(token, self.region, self.secrets_sync)
+            client = self.client_controller.get_client(
+                token, self.region, self.secrets_sync
+            )
             secret = client.get_by_id(key_id)
             if secret is not None:
                 return secret
@@ -69,7 +76,9 @@ class BwsReadGSecretExecutor(GSecretExecutor):
             return executor.get_secret_id(key_id, token, next)
         return GsecretFailure(reason="Secret not found", code=404)
 
-    def get_secret_key(self, key: str, token: Token, next: ForwardChainExecutor["GSecretExecutor"]) -> Secret | GsecretFailure:
+    def get_secret_key(
+        self, key: str, token: Token, next: ForwardChainExecutor["GSecretExecutor"]
+    ) -> Secret | GsecretFailure:
         """
         Retrieve a secret by its key name from Bitwarden.
         Note: BWS SDK doesn't support direct key lookup, so we pass to next executor.
@@ -77,7 +86,9 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         # BWS SDK only supports get_by_id, not get_by_key
         # Pass to next executor in chain
         try:
-            client = self.client_controller.get_client(token, self.region, self.secrets_sync)
+            client = self.client_controller.get_client(
+                token, self.region, self.secrets_sync
+            )
             secret = client.get_by_key(key)
             if secret:
                 return secret
@@ -99,7 +110,10 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         return GsecretFailure(reason="Secret not found", code=404)
 
     def write_secret(
-        self, secret: WriteSecret, token: Token, next: ForwardChainExecutor["GSecretExecutor"]
+        self,
+        secret: WriteSecret,
+        token: Token,
+        next: ForwardChainExecutor["GSecretExecutor"],
     ) -> Secret | GsecretFailure:
         """
         Write operations are not supported in read-only mode.
@@ -109,17 +123,27 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         executor = next.next()
         if executor:
             return executor.write_secret(secret, token, next)
-        return GsecretFailure(reason="Write operations not supported in BWS read-only mode", code=501)
+        return GsecretFailure(
+            reason="Write operations not supported in BWS read-only mode", code=501
+        )
 
     def secrets_sync(self, token_hash: TokenID, secrets: list[UpdatedSecret]):
         print("Syncing secrets update notification...", len(secrets))
-        chain_controller = ReverseChainExecutor(self.chain, self.chain.get_stage_index(self))
+        chain_controller = ReverseChainExecutor(
+            self.chain, self.chain.get_stage_index(self)
+        )
         executor = chain_controller.next()
         if executor:
-            executor.secret_updated(secrets, token_hash, self.chain.get_stage_index(self), chain_controller)
+            executor.secret_updated(
+                secrets, token_hash, self.chain.get_stage_index(self), chain_controller
+            )
 
     def secret_updated(
-        self, secrets: list[UpdatedSecret], token_hash: TokenID, priority: int, next: ReverseChainExecutor["GSecretExecutor"]
+        self,
+        secrets: list[UpdatedSecret],
+        token_hash: TokenID,
+        priority: int,
+        next: ReverseChainExecutor["GSecretExecutor"],
     ):
         """Handle secret update notifications in reverse chain"""
         # For read-only mode, we don't need to handle updates

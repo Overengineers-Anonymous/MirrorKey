@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from core.config.schema import ChainStepConfig, ChainConfig, RootConfig
+
+from core.config.schema import ChainConfig, ChainStepConfig, RootConfig
 
 
 class TestChainStepConfig:
@@ -52,7 +53,7 @@ class TestChainStepConfig:
     def test_missing_name_raises_error(self):
         """Test that missing name field raises ValidationError."""
         with pytest.raises(ValidationError):
-            ChainStepConfig(config={"key": "value"})
+            ChainStepConfig(config={"key": "value"})  # type: ignore
 
     def test_model_serialization(self):
         """Test that model can be serialized to dict."""
@@ -94,8 +95,8 @@ class TestChainConfig:
             api="test_api",
             name="test_chain",
             steps=[
-                {"name": "step1", "config": {"key": "value"}},
-                {"name": "step2"},
+                ChainStepConfig(name="step1", config={"key": "value"}),
+                ChainStepConfig(name="step2"),
             ],
         )
 
@@ -109,24 +110,24 @@ class TestChainConfig:
     def test_missing_api_raises_error(self):
         """Test that missing api field raises ValidationError."""
         with pytest.raises(ValidationError):
-            ChainConfig(name="test_chain", steps=[])
+            ChainConfig(name="test_chain", steps=[])  # type: ignore
 
     def test_missing_name_raises_error(self):
         """Test that missing name field raises ValidationError."""
         with pytest.raises(ValidationError):
-            ChainConfig(api="test_api", steps=[])
+            ChainConfig(api="test_api", steps=[])  # type: ignore
 
     def test_missing_steps_raises_error(self):
         """Test that missing steps field raises ValidationError."""
         with pytest.raises(ValidationError):
-            ChainConfig(api="test_api", name="test_chain")
+            ChainConfig(api="test_api", name="test_chain")  # type: ignore
 
     def test_model_serialization(self):
         """Test that model can be serialized to dict."""
         chain = ChainConfig(
             api="test_api",
             name="test_chain",
-            steps=[{"name": "step1", "config": {"key": "value"}}],
+            steps=[ChainStepConfig(name="step1", config={"key": "value"})],
         )
         data = chain.model_dump()
 
@@ -165,11 +166,11 @@ class TestRootConfig:
         """Test RootConfig initialization with dict chains (pydantic conversion)."""
         root = RootConfig(
             chains=[
-                {
-                    "api": "test_api",
-                    "name": "test_chain",
-                    "steps": [{"name": "step1", "config": {"key": "value"}}],
-                }
+                ChainConfig(
+                    api="test_api",
+                    name="test_chain",
+                    steps=[ChainStepConfig(name="step1", config={"key": "value"})],
+                )
             ]
         )
 
@@ -182,17 +183,17 @@ class TestRootConfig:
     def test_missing_chains_raises_error(self):
         """Test that missing chains field raises ValidationError."""
         with pytest.raises(ValidationError):
-            RootConfig()
+            RootConfig()  # type: ignore
 
     def test_model_serialization(self):
         """Test that model can be serialized to dict."""
         root = RootConfig(
             chains=[
-                {
-                    "api": "test_api",
-                    "name": "test_chain",
-                    "steps": [{"name": "step1"}],
-                }
+                ChainConfig(
+                    api="test_api",
+                    name="test_chain",
+                    steps=[ChainStepConfig(name="step1")],
+                )
             ]
         )
         data = root.model_dump()
@@ -205,31 +206,33 @@ class TestRootConfig:
         """Test RootConfig with complex nested structure."""
         root = RootConfig(
             chains=[
-                {
-                    "api": "api1",
-                    "name": "chain1",
-                    "steps": [
-                        {"name": "step1", "config": {"param1": "value1"}},
-                        {"name": "step2", "config": {"param2": {"nested": "value2"}}},
-                        {"name": "step3", "config": None},
+                ChainConfig(
+                    api="api1",
+                    name="chain1",
+                    steps=[
+                        ChainStepConfig(name="step1", config={"param1": "value1"}),
+                        ChainStepConfig(
+                            name="step2", config={"param2": {"nested": "value2"}}
+                        ),
+                        ChainStepConfig(name="step3", config=None),
                     ],
-                },
-                {
-                    "api": "api2",
-                    "name": "chain2",
-                    "steps": [
-                        {"name": "step4", "config": {"list": [1, 2, 3]}},
+                ),
+                ChainConfig(
+                    api="api2",
+                    name="chain2",
+                    steps=[
+                        ChainStepConfig(name="step4", config={"list": [1, 2, 3]}),
                     ],
-                },
+                ),
             ]
         )
 
         assert len(root.chains) == 2
         assert len(root.chains[0].steps) == 3
-        assert root.chains[0].steps[0].config["param1"] == "value1"
-        assert root.chains[0].steps[1].config["param2"]["nested"] == "value2"
+        assert root.chains[0].steps[0].config["param1"] == "value1"  # type: ignore
+        assert root.chains[0].steps[1].config["param2"]["nested"] == "value2"  # type: ignore
         assert root.chains[0].steps[2].config is None
-        assert root.chains[1].steps[0].config["list"] == [1, 2, 3]
+        assert root.chains[1].steps[0].config["list"] == [1, 2, 3]  # type: ignore
 
     def test_from_dict(self):
         """Test creating RootConfig from dictionary (simulating YAML load)."""
@@ -244,7 +247,7 @@ class TestRootConfig:
                 }
             ]
         }
-        root = RootConfig(**data)
+        root = RootConfig(**data)  # type: ignore
 
         assert isinstance(root, RootConfig)
         assert len(root.chains) == 1

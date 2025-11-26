@@ -1,6 +1,8 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi import FastAPI
+
 from core.api.builder import ApiBuilder
 from core.api.manager import APIPluginManager
 from core.config.loader import LoadedConfig
@@ -69,13 +71,17 @@ class TestApiBuilder:
 
             # Verify imports
             importer.import_api.assert_called_once_with("test_api")
-            importer.import_stage_plugin.assert_called_once_with("test_api", "test_stage")
+            importer.import_stage_plugin.assert_called_once_with(
+                "test_api", "test_stage"
+            )
 
             # Verify chain creation
             mock_chain_class.assert_called_once_with("test_chain", mock_stage_class)
 
             # Verify stage building and adding
-            mock_stage_builder.build.assert_called_once_with({"key": "value"}, mock_chain)
+            mock_stage_builder.build.assert_called_once_with(
+                {"key": "value"}, mock_chain
+            )
             mock_chain.add_stage.assert_called_once_with(mock_stage_instance)
 
             # Verify chain added to controller
@@ -90,7 +96,9 @@ class TestApiBuilder:
 
         assert "API 'test_api' not found" in str(exc_info.value)
 
-    def test_load_stages_stage_not_registered(self, api_builder, config, plugin_manager, importer):
+    def test_load_stages_stage_not_registered(
+        self, api_builder, config, plugin_manager, importer
+    ):
         """Test load_stages when stage is not registered."""
         mock_api = MagicMock()
         mock_api.stage_class = MagicMock()
@@ -102,7 +110,9 @@ class TestApiBuilder:
             with pytest.raises(ValueError) as exc_info:
                 api_builder.load_stages(config)
 
-            assert "Stage 'test_stage' not registered in API 'test_api'" in str(exc_info.value)
+            assert "Stage 'test_stage' not registered in API 'test_api'" in str(
+                exc_info.value
+            )
 
     def test_load_stages_multiple_chains(self, api_builder, plugin_manager, importer):
         """Test loading multiple chains and stages."""
@@ -147,7 +157,9 @@ class TestApiBuilder:
                 api_builder.load_stages.assert_called_once_with(config)
 
                 # Verify router was included
-                mock_include_router.assert_called_once_with(mock_router, prefix="/test_api")
+                mock_include_router.assert_called_once_with(
+                    mock_router, prefix="/test_api"
+                )
 
                 # Verify the same app is returned
                 assert result is fastapi_app

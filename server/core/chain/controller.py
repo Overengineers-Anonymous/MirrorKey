@@ -1,4 +1,3 @@
-
 from core.interface.main import Interface
 
 from .chain import Chain, ChainStage
@@ -49,5 +48,3 @@ class ChainController[T: ChainStage]:
         if chain_instance is not None:
             return ForwardChainExecutor(chain_instance)
         return None
-
-

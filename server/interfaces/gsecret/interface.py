@@ -12,11 +12,13 @@ class GsecretFailure(BaseModel):
     reason: str
     code: int
 
+
 class RateLimit(BaseModel):
     limit: int
     remaining: int
     reset: datetime.datetime
     api_relation: str
+
 
 class Secret(BaseModel):
     key_id: str
@@ -24,13 +26,16 @@ class Secret(BaseModel):
     secret: Any | str
     rate_limit: RateLimit | None = None
 
+
 class UpdatedSecret(Secret):
     api_id_relation: str | None = None
     api_key_relation: str | None = None
 
+
 class WriteSecret(BaseModel):
     key: str
     secret: Any | str
+
 
 class TokenID(BaseModel):
     token_id: str
@@ -40,12 +45,14 @@ class TokenID(BaseModel):
             return False
         return self.token_id == value.token_id
 
+
 class Token(BaseModel):
     token: str
 
     def from_token_id(self) -> TokenID:
         token_hash = hashlib.sha256(self.token.encode()).hexdigest()
         return TokenID(token_id=token_hash)
+
 
 class GSecretExecutor(ChainStage, Protocol):
     def get_secret_id(
@@ -57,13 +64,20 @@ class GSecretExecutor(ChainStage, Protocol):
     ) -> Secret | GsecretFailure: ...
 
     def write_secret(
-        self, secret: WriteSecret, token: Token, next: ForwardChainExecutor["GSecretExecutor"]
+        self,
+        secret: WriteSecret,
+        token: Token,
+        next: ForwardChainExecutor["GSecretExecutor"],
     ) -> Secret | GsecretFailure: ...
 
     # reverse chain methods
 
     def secret_updated(
-        self, secrets: list[UpdatedSecret], token_hash: TokenID, priority: int, next: ReverseChainExecutor["GSecretExecutor"]
+        self,
+        secrets: list[UpdatedSecret],
+        token_hash: TokenID,
+        priority: int,
+        next: ReverseChainExecutor["GSecretExecutor"],
     ): ...
 
 

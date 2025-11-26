@@ -6,13 +6,13 @@ authors = [
     {name = "ripple",email = "github@ripple.contact"}
 ]
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = "==3.13.*"
 dependencies = [
     "fastapi (>=0.121.2,<0.122.0)",
     "pydantic (>=2.12.4,<3.0.0)",
     "uvicorn (>=0.38.0,<0.39.0)",
     "pyyaml (>=6.0.3,<7.0.0)",
-    "bws-sdk (>=1.3.1,<2.0.0)"
+    "bws-sdk (>=1.3.2,<2.0.0)",
 ]
 
 [tool.poetry]
@@ -22,7 +22,9 @@ package-mode = false
 dev = [
     "ruff (>=0.14.5,<0.15.0)",
     "pytest (>=9.0.1,<10.0.0)",
-    "pytest-cov (>=7.0.0,<8.0.0)"
+    "pytest-cov (>=7.0.0,<8.0.0)",
+    "lefthook (>=2.0.4,<3.0.0)",
+    "pyright[nodejs] (>=1.1.407,<2.0.0)"
 ]
 
 [build-system]
@@ -31,3 +33,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "W1", "W2", "F", "RUF", "I"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+exclude = ["tests", ".venv"]

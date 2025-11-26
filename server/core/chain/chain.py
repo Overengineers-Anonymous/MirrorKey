@@ -5,7 +5,6 @@ from typing import Any, Protocol, runtime_checkable
 class ChainStage(Protocol): ...
 
 
-
 class Chain[T: ChainStage]:
     def __init__(self, name: str, stage_class: type[T]) -> None:
         self.name = name
@@ -14,7 +13,9 @@ class Chain[T: ChainStage]:
 
     def add_stage(self, stage: T) -> None:
         if not isinstance(stage, self.stage_class):
-            raise TypeError("Stage must be an instance of the specified ChainStage protocol.")
+            raise TypeError(
+                "Stage must be an instance of the specified ChainStage protocol."
+            )
         self.stages.append(stage)
 
     def get_stages(self, index: int) -> T:
@@ -28,6 +29,7 @@ class Chain[T: ChainStage]:
 
     def __len__(self) -> int:
         return len(self.stages)
+
 
 @runtime_checkable
 class ChainStageBuilder[T: ChainStage](Protocol):

@@ -1,8 +1,9 @@
-import pytest
-import tempfile
 from pathlib import Path
+
+import pytest
+
 from core.config.loader import LoadedConfig
-from core.config.schema import RootConfig, ChainConfig, ChainStepConfig
+from core.config.schema import RootConfig
 
 
 class TestLoadedConfig:
@@ -44,11 +45,15 @@ class TestLoadedConfig:
     @pytest.fixture
     def loaded_config(self, stage_cfg_map, chain_stage_map):
         """Create a LoadedConfig instance."""
-        return LoadedConfig(stage_cfg_map=stage_cfg_map, chain_stage_map=chain_stage_map)
+        return LoadedConfig(
+            stage_cfg_map=stage_cfg_map, chain_stage_map=chain_stage_map
+        )
 
     def test_init(self, stage_cfg_map, chain_stage_map):
         """Test LoadedConfig initialization."""
-        config = LoadedConfig(stage_cfg_map=stage_cfg_map, chain_stage_map=chain_stage_map)
+        config = LoadedConfig(
+            stage_cfg_map=stage_cfg_map, chain_stage_map=chain_stage_map
+        )
 
         assert config.stage_cfg_map == stage_cfg_map
         assert config.chain_stage_map == chain_stage_map
@@ -150,7 +155,9 @@ chains:
             "param1": "value1",
             "param2": "value2",
         }
-        assert config.stage_config("test_api", "test_chain", "step2") == {"param3": "value3"}
+        assert config.stage_config("test_api", "test_chain", "step2") == {
+            "param3": "value3"
+        }
         assert config.stage_config("test_api", "another_chain", "step3") is None
 
     def test_from_yaml_multiple_apis(self, tmp_path):
@@ -226,6 +233,8 @@ chains:
             },
         }
 
-        config = LoadedConfig(stage_cfg_map=stage_cfg_map, chain_stage_map=chain_stage_map)
+        config = LoadedConfig(
+            stage_cfg_map=stage_cfg_map, chain_stage_map=chain_stage_map
+        )
 
         assert config.stage_config("api1", "chain1", "stage1") is None
