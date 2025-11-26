@@ -16,12 +16,17 @@ class RateLimit(BaseModel):
     limit: int
     remaining: int
     reset: datetime.datetime
+    api_relation: str
 
 class Secret(BaseModel):
     key_id: str
     key: str
     secret: Any | str
     rate_limit: RateLimit | None = None
+
+class UpdatedSecret(Secret):
+    api_id_relation: str | None = None
+    api_key_relation: str | None = None
 
 class WriteSecret(BaseModel):
     key: str
@@ -58,7 +63,7 @@ class GSecretExecutor(ChainStage, Protocol):
     # reverse chain methods
 
     def secret_updated(
-        self, secrets: list[Secret], token_hash: TokenID, priority: int, next: ReverseChainExecutor["GSecretExecutor"]
+        self, secrets: list[UpdatedSecret], token_hash: TokenID, priority: int, next: ReverseChainExecutor["GSecretExecutor"]
     ): ...
 
 

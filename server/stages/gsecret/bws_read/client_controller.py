@@ -1,45 +1,47 @@
 import datetime
-from threading import Lock, Thread
 import time
+from threading import Lock, Thread
 from typing import Protocol
 
-from bws_sdk import BWSecretClient, BitwardenSecret, Region
+from bws_sdk import BWSecretClient, Region
 from bws_sdk.bws_types import BitwardenSync
-from interfaces.gsecret import RateLimit, Secret, Token, TokenID
+from interfaces.gsecret import RateLimit, Secret, Token, TokenID, UpdatedSecret
 
 
 class SyncCallback(Protocol):
-    def __call__(self, token_hash: TokenID, secrets: list[Secret]) -> None: ...
+    def __call__(self, token_hash: TokenID, secrets: list[UpdatedSecret]) -> None: ...
 
 class ApiRateLimiter:
     def __init__(self):
-        self.rate_limit_max: int = 0
-        self.rate_limit_window: int = 0
-        self.rate_limit_remaining: int = 0
+        self.max: int = 0
+        self.window: int = 0
+        self.remaining: int = 0
+        self.reset = datetime.datetime.now(tz=datetime.timezone.utc)
 
     def delay(self) -> None:
         """delay needed to avoid rate limiting."""
-        if self.rate_limit_max == 0:
+        if self.max == 0:
             return
-        time.sleep(self.rate_limit_window / (self.rate_limit_max/5)) # 20% buffer
+        time.sleep(self.window / (self.max*0.8)) # 80% buffer
 
     def _rt_window_seconds(self, window: str) -> int:
-        match (window[:-1], window[-1]):
-            case [int(x), "s"]:
+        match (int(window[:-1]), window[-1]):
+            case (x, "s"):
                 return x*1
-            case [int(x), "m"]:
+            case (x, "m"):
                 return x*60
-            case [int(x), "h"]:
+            case (x, "h"):
                 return x*3600
             case _:
                 return 0
 
-    def trigger(self, window: str, remaining: int, reset: datetime.datetime):
-        if remaining >= self.rate_limit_remaining:
-            self.rate_limit_max = remaining+1
-            self.rate_limit_window = self._rt_window_seconds(window)
-            self.rate_limit_reset = reset
-        self.rate_limit_remaining = remaining
+    def trigger(self, window: str, remaining: int):
+        if remaining >= self.remaining:
+            self.max = remaining+1
+            self.window = self._rt_window_seconds(window)
+            now = datetime.datetime.now(tz=datetime.timezone.utc)
+            self.reset = now + datetime.timedelta(seconds=self.window)
+        self.remaining = remaining
 
 class BwsClient:
     def __init__(self, client: BWSecretClient, token_hash: TokenID):
@@ -55,7 +57,7 @@ class BwsClient:
         self.kv_translater: dict[str, str] = {}
 
         self.sync_rate_limiter = ApiRateLimiter()
-        self.id_rate_limiter = ApiRateLimiter()
+        self.id_rate_limiter: dict[str, ApiRateLimiter] = {}
 
     def populate_kv_cache(self):
         """Populate the key-value cache from existing secrets."""
@@ -83,19 +85,22 @@ class BwsClient:
         bw_secret = self.client.get_by_id(key_id)
         if not bw_secret:
             return None
-        self.id_rate_limiter.trigger(
+        if bw_secret.id not in self.id_rate_limiter:
+            self.id_rate_limiter[bw_secret.id] = ApiRateLimiter()
+        rate_limiter = self.id_rate_limiter[bw_secret.id]
+        rate_limiter.trigger(
             window=bw_secret.ratelimit.limit,
             remaining=bw_secret.ratelimit.remaining,
-            reset=bw_secret.ratelimit.reset,
         )
         return Secret(
             key_id=bw_secret.id,
             key=bw_secret.key,
             secret=bw_secret.value,
             rate_limit=RateLimit(
-                limit=self.id_rate_limiter.rate_limit_max,
-                remaining=self.id_rate_limiter.rate_limit_remaining,
-                reset=self.id_rate_limiter.rate_limit_reset or datetime.datetime.now(tz=datetime.timezone.utc)
+                limit=rate_limiter.max,
+                remaining=rate_limiter.remaining,
+                reset=rate_limiter.reset,
+                api_relation=f"bws_read:id:{bw_secret.id}",
             )
         )
 
@@ -105,38 +110,46 @@ class BwsClient:
             return None
         return self.get_by_id(secret_id)
 
-    def _convert_secrets(self, secrets: BitwardenSync) -> list[Secret]:
-        native_secrets: list[Secret] = []
+    def _convert_secrets(self, secrets: BitwardenSync) -> list[UpdatedSecret]:
+        native_secrets: list[UpdatedSecret] = []
         if secrets.secrets is None:
             return native_secrets
         for secret in secrets.secrets:
             native_secrets.append(
-                Secret(
+                UpdatedSecret(
                     key_id=secret.id,
                     key=secret.key,
                     secret=secret.value,
+                    api_id_relation=f"bws_read:id:{secret.id}",
+                    api_key_relation=f"bws_read:key:{secret.id}",
                 )
             )
         return native_secrets
-
-
 
     def _sync(self, last_sync: datetime.datetime) -> BitwardenSync | None:
         secrets = self.client.sync(last_sync)
         self.sync_rate_limiter.trigger(
             window=secrets.ratelimit.limit,
             remaining=secrets.ratelimit.remaining,
-            reset=secrets.ratelimit.reset,
         )
         if secrets.secrets is None:
             return None
 
+        new_secret_ids = {secret.id for secret in secrets.secrets}
+        old_secret_ids = set(self.id_rate_limiter.keys())
+        stale_secret_ids = old_secret_ids - new_secret_ids
+        secret_ids = new_secret_ids - old_secret_ids
+        for stale_id in stale_secret_ids:
+            del self.id_rate_limiter[stale_id]
+        for secret_id in secret_ids:
+            self.id_rate_limiter[secret_id] = ApiRateLimiter()
+
         with self.kv_lock:
+            self.kv_translater.clear()
             for secret in secrets.secrets:
                 self.kv_translater[secret.key] = secret.id
+
         return secrets
-
-
 
     def _sync_loop(self):
         self.sync_rate_limiter.delay()
