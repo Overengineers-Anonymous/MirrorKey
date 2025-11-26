@@ -1,5 +1,6 @@
-plugins:
-  bws_secret:
-    config:
-      write_enabled: false
+chains:
+  - api: gsecret
+    name: bws_read
+    steps:
+      - name: bws_read
 
