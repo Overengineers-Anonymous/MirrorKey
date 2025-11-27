@@ -1,4 +1,3 @@
-from multiprocessing.spawn import old_main_modules
 from typing import Any
 
 from core.chain.chain import ChainStageBuilder
@@ -73,7 +72,9 @@ class CacheGSecretExecutor(GSecretExecutor):
 
         return GsecretFailure(reason="Secret not found", code=404)
 
-    def get_secret_key(self, key: str, token: Token, next: ForwardChainExecutor["GSecretExecutor"]) -> Secret | GsecretFailure:
+    def get_secret_key(
+        self, key: str, token: Token, next: ForwardChainExecutor["GSecretExecutor"]
+    ) -> Secret | GsecretFailure:
         """Retrieve a secret by its key, using cache if available"""
         token_hash = token.from_token_id()
 
@@ -108,7 +109,6 @@ class CacheGSecretExecutor(GSecretExecutor):
     ) -> Secret | GsecretFailure:
         """Write a secret, optionally invalidating or updating cache"""
         token_hash = token.from_token_id()
-
 
         # Pass to next executor
         executor = next.next()
@@ -147,7 +147,6 @@ class CacheGSecretExecutor(GSecretExecutor):
             token_cache.invalidate_by_id(stale_id)
         for stale_key in stale_keys:
             token_cache.invalidate_by_key(stale_key)
-
 
         # Pass to next executor in reverse chain
         executor = next.next()
