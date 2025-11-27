@@ -7,5 +7,6 @@ chains:
     name: bws_read1
     steps:
       - name: rate_limiter
+      - name: cache
       - name: bws_read
 
