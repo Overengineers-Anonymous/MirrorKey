@@ -13,17 +13,18 @@ class SyncCallback(Protocol):
 
 
 class ApiRateLimiter:
-    def __init__(self):
+    def __init__(self, min_delay: float = 0.0):
         self.max: int = 0
         self.window: int = 0
         self.remaining: int = 0
+        self.min_delay = min_delay
         self.reset = datetime.datetime.now(tz=datetime.timezone.utc)
 
     def delay(self) -> None:
         """delay needed to avoid rate limiting."""
         if self.max == 0:
             return
-        time.sleep(self.window / (self.max * 0.8))  # 80% buffer
+        time.sleep(max(self.min_delay, (self.window / (self.max) * 2)))  # 50% buffer
 
     def _rt_window_seconds(self, window: str) -> int:
         match (int(window[:-1]), window[-1]):
@@ -58,7 +59,7 @@ class BwsClient:
         self.kv_lock = Lock()
         self.kv_translater: dict[str, str] = {}
 
-        self.sync_rate_limiter = ApiRateLimiter()
+        self.sync_rate_limiter = ApiRateLimiter(2)
         self.id_rate_limiter: dict[str, ApiRateLimiter] = {}
 
     def populate_kv_cache(self):

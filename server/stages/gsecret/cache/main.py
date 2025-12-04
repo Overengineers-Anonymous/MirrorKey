@@ -57,9 +57,9 @@ class CacheGSecretExecutor(GSecretExecutor):
             return cached_secret
 
         # Cache miss or caching disabled, fetch from next executor
-        executor = next.next()
-        if executor:
-            result = executor.get_secret_id(key_id, token, next)
+        stage = next.next()
+        if stage:
+            result = stage.get_secret_id(key_id, token, next)
 
             # Cache the result if it's a successful secret retrieval
             if isinstance(result, Secret):
@@ -85,9 +85,9 @@ class CacheGSecretExecutor(GSecretExecutor):
             return cached_secret
 
         # Cache miss or caching disabled, fetch from next executor
-        executor = next.next()
-        if executor:
-            result = executor.get_secret_key(key, token, next)
+        stage = next.next()
+        if stage:
+            result = stage.get_secret_key(key, token, next)
 
             # Cache the result if it's a successful secret retrieval
             if isinstance(result, Secret):
@@ -111,9 +111,9 @@ class CacheGSecretExecutor(GSecretExecutor):
         token_hash = token.from_token_id()
 
         # Pass to next executor
-        executor = next.next()
-        if executor:
-            result = executor.write_secret(secret, token, next)
+        stage = next.next()
+        if stage:
+            result = stage.write_secret(secret, token, next)
 
             # Cache the result if it's a successful write and caching is enabled
             if isinstance(result, Secret):
@@ -149,9 +149,9 @@ class CacheGSecretExecutor(GSecretExecutor):
             token_cache.invalidate_by_key(stale_key)
 
         # Pass to next executor in reverse chain
-        executor = next.next()
-        if executor:
-            return executor.secret_updated(secrets, token_hash, priority, next)
+        stage = next.next()
+        if stage:
+            return stage.secret_updated(secrets, token_hash, priority, next)
 
 
 class CacheGSecretStageBuilder(ChainStageBuilder[GSecretExecutor]):

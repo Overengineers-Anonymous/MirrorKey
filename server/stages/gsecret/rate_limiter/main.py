@@ -40,9 +40,9 @@ class RateLimiterGSecretExecutor(GSecretExecutor):
         """Retrieve a secret by ID with rate limiting"""
         delay = BufferDelay(timeout=self.config.timeout)
         self.stage_client.id_delay(key_id, delay)
-        executor = next.next()
-        if executor:
-            secret = executor.get_secret_id(key_id, token, next)
+        stage = next.next()
+        if stage:
+            secret = stage.get_secret_id(key_id, token, next)
             if isinstance(secret, Secret) and secret.rate_limit is not None:
                 self.stage_client.log_id_rate_limit(
                     key_id,
@@ -61,9 +61,9 @@ class RateLimiterGSecretExecutor(GSecretExecutor):
         """Retrieve a secret by key with rate limiting"""
         delay = BufferDelay(timeout=self.config.timeout)
         self.stage_client.key_delay(key, delay)
-        executor = next.next()
-        if executor:
-            secret = executor.get_secret_key(key, token, next)
+        stage = next.next()
+        if stage:
+            secret = stage.get_secret_key(key, token, next)
             if isinstance(secret, Secret) and secret.rate_limit is not None:
                 self.stage_client.log_key_rate_limit(
                     key,
@@ -84,9 +84,9 @@ class RateLimiterGSecretExecutor(GSecretExecutor):
     ) -> Secret | GsecretFailure:
         """Write a secret with rate limiting"""
 
-        executor = next.next()
-        if executor:
-            return executor.write_secret(secret, token, next)
+        stage = next.next()
+        if stage:
+            return stage.write_secret(secret, token, next)
         return GsecretFailure(reason="No executor available", code=500)
 
     def secret_updated(
@@ -108,9 +108,9 @@ class RateLimiterGSecretExecutor(GSecretExecutor):
                     secret.key, secret.api_key_relation
                 )
 
-        executor = next.next()
-        if executor:
-            return executor.secret_updated(secrets, token_hash, priority, next)
+        stage = next.next()
+        if stage:
+            return stage.secret_updated(secrets, token_hash, priority, next)
 
 
 class RateLimiterGSecretStageBuilder(ChainStageBuilder[GSecretExecutor]):

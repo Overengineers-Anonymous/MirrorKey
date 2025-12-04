@@ -53,10 +53,14 @@ def get_token(
 @router.get("/{chain}/key/{key}")
 async def get_secret(
     key: str,
-    chain_executor: Annotated[
-        ForwardChainExecutor[GSecretExecutor], Depends(get_chain_executor)
+    executor: Annotated[
+        GSecretExecutor,
+        Depends(get_first_executor),
     ],
-    executor: Annotated[GSecretExecutor, Depends(get_first_executor)],
+    chain_executor: Annotated[
+        ForwardChainExecutor[GSecretExecutor],
+        Depends(get_chain_executor),
+    ],
     token: Annotated[Token, Depends(get_token)],
 ):
     secret = executor.get_secret_key(key, token, chain_executor)
@@ -68,10 +72,14 @@ async def get_secret(
 @router.get("/{chain}/id/{key_id}")
 async def get_secret_by_id(
     key_id: str,
-    chain_executor: Annotated[
-        ForwardChainExecutor[GSecretExecutor], Depends(get_chain_executor)
+    executor: Annotated[
+        GSecretExecutor,
+        Depends(get_first_executor),
     ],
-    executor: Annotated[GSecretExecutor, Depends(get_first_executor)],
+    chain_executor: Annotated[
+        ForwardChainExecutor[GSecretExecutor],
+        Depends(get_chain_executor),
+    ],
     token: Annotated[Token, Depends(get_token)],
 ):
     secret = executor.get_secret_id(key_id, token, chain_executor)
@@ -83,10 +91,14 @@ async def get_secret_by_id(
 @router.post("/{chain}/write")
 async def write_secret(
     secret: WriteSecret,
-    chain_executor: Annotated[
-        ForwardChainExecutor[GSecretExecutor], Depends(get_chain_executor)
+    executor: Annotated[
+        GSecretExecutor,
+        Depends(get_first_executor),
     ],
-    executor: Annotated[GSecretExecutor, Depends(get_first_executor)],
+    chain_executor: Annotated[
+        ForwardChainExecutor[GSecretExecutor],
+        Depends(get_chain_executor),
+    ],
     token: Annotated[Token, Depends(get_token)],
 ):
     return executor.write_secret(secret, token, chain_executor)
