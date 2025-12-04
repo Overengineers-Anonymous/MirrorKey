@@ -57,7 +57,7 @@ class BwsClient:
     def write_secret(self, secret: WriteSecret, project_ids: list[str]) -> Secret:
         bws_secret = self.client.create(
             key=secret.key, value=secret.secret, note="", project_ids=project_ids
-        )
+        )  # TODO: rate limiting
         return Secret(
             key_id=bws_secret.id,
             key=bws_secret.key,
