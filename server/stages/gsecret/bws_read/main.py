@@ -131,7 +131,6 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         )
 
     def secrets_sync(self, token_hash: TokenID, secrets: list[UpdatedSecret]):
-        print("Syncing secrets update notification...", len(secrets))
         chain_controller = ReverseChainExecutor(
             self.chain, self.chain.get_stage_index(self)
         )

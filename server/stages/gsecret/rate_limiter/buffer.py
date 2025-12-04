@@ -151,7 +151,6 @@ class BufferController:
                     min_delay = delay_seconds
                     min_api = api_name
             if min_delay > 0 and min_api is not None:
-                print(f"slept for {min_delay} seconds on api {min_api}")
                 time.sleep(min_delay)
                 delay = all_delays.pop(min_api)
                 delay.event.set()
