@@ -4,7 +4,13 @@ from core import ChainController
 from core.api.manager import APIPlugin, plugin_manager
 from core.chain.controller import ForwardChainExecutor
 from fastapi import APIRouter, Depends, Header, HTTPException, Path
-from interfaces.gsecret import GSecretExecutor, Token, WriteSecret, gsecret_interface
+from interfaces.gsecret import (
+    GSecretExecutor,
+    GsecretFailure,
+    Token,
+    WriteSecret,
+    gsecret_interface,
+)
 
 router = APIRouter()
 
@@ -64,8 +70,8 @@ async def get_secret(
     token: Annotated[Token, Depends(get_token)],
 ):
     secret = executor.get_secret_key(key, token, chain_executor)
-    if not secret:
-        raise HTTPException(status_code=404, detail="Secret not found")
+    if isinstance(secret, GsecretFailure):
+        raise HTTPException(status_code=secret.code, detail=secret.reason)
     return secret
 
 
@@ -83,8 +89,8 @@ async def get_secret_by_id(
     token: Annotated[Token, Depends(get_token)],
 ):
     secret = executor.get_secret_id(key_id, token, chain_executor)
-    if not secret:
-        raise HTTPException(status_code=404, detail="Secret not found")
+    if isinstance(secret, GsecretFailure):
+        raise HTTPException(status_code=secret.code, detail=secret.reason)
     return secret
 
 
@@ -101,7 +107,9 @@ async def write_secret(
     ],
     token: Annotated[Token, Depends(get_token)],
 ):
-    return executor.write_secret(secret, token, chain_executor)
+    response = executor.write_secret(secret, token, chain_executor)
+    if isinstance(response, GsecretFailure):
+        raise HTTPException(status_code=response.code, detail=response.reason)
 
 
 gsecret_plugin = plugin_manager.register_plugin(
