@@ -62,10 +62,9 @@ class BwsWriteGSecretExecutor(GSecretExecutor):
     ) -> Secret | GsecretFailure:
         """Retrieve a secret by its ID from Bitwarden"""
 
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.get_secret_id(key_id, token, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.get_secret_id(key_id, token, next)
         return GsecretFailure(reason="Secret not found", code=404)
 
     def get_secret_key(
@@ -75,10 +74,9 @@ class BwsWriteGSecretExecutor(GSecretExecutor):
         Retrieve a secret by its key name from Bitwarden.
         Note: BWS SDK doesn't support direct key lookup, so we pass to next executor.
         """
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.get_secret_id(key, token, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.get_secret_id(key, token, next)
 
         return GsecretFailure(reason="Secret not found", code=404)
 
@@ -113,10 +111,9 @@ class BwsWriteGSecretExecutor(GSecretExecutor):
             return GsecretFailure(reason=f"Unexpected error: {e!s}", code=500)
 
         # If write failed to return a secret, try next executor
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.write_secret(secret, token, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.write_secret(secret, token, next)
         return GsecretFailure(reason="Write operation failed", code=500)
 
     def secret_updated(
@@ -128,10 +125,9 @@ class BwsWriteGSecretExecutor(GSecretExecutor):
     ):
         """Handle secret update notifications in reverse chain"""
         # Pass to next executor in reverse chain
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.secret_updated(secrets, token_hash, priority, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.secret_updated(secrets, token_hash, priority, next)
 
 
 class BwsWriteGSecretStageBuilder(ChainStageBuilder[GSecretExecutor]):

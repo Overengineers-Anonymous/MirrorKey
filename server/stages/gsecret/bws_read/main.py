@@ -71,10 +71,9 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         except Exception as e:
             return GsecretFailure(reason=f"Unexpected error: {e!s}", code=500)
 
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.get_secret_id(key_id, token, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.get_secret_id(key_id, token, next)
         return GsecretFailure(reason="Secret not found", code=404)
 
     def get_secret_key(
@@ -104,10 +103,9 @@ class BwsReadGSecretExecutor(GSecretExecutor):
             return GsecretFailure(reason=f"API error: {e!s}", code=500)
         except Exception as e:
             return GsecretFailure(reason=f"Unexpected error: {e!s}", code=500)
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.get_secret_id(key, token, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.get_secret_id(key, token, next)
 
         return GsecretFailure(reason="Secret not found", code=404)
 
@@ -122,10 +120,9 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         Pass to next executor in chain.
         """
         # This is a read-only executor, pass to next
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.write_secret(secret, token, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.write_secret(secret, token, next)
         return GsecretFailure(
             reason="Write operations not supported in BWS read-only mode", code=501
         )
@@ -134,11 +131,10 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         chain_controller = ReverseChainExecutor(
             self.chain, self.chain.get_stage_index(self)
         )
-        executor = chain_controller.next()
-        if executor:
-            stage, next_executor = executor
+        stage = chain_controller.next()
+        if stage:
             stage.secret_updated(
-                secrets, token_hash, self.chain.get_stage_index(self), next_executor
+                secrets, token_hash, self.chain.get_stage_index(self), chain_controller
             )
 
     def secret_updated(
@@ -151,10 +147,9 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         """Handle secret update notifications in reverse chain"""
         # For read-only mode, we don't need to handle updates
         # Just pass to next executor
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.secret_updated(secrets, token_hash, priority, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.secret_updated(secrets, token_hash, priority, next)
 
 
 class BwsReadGSecretStageBuilder(ChainStageBuilder[GSecretExecutor]):

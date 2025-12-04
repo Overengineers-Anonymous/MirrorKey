@@ -11,27 +11,27 @@ class ForwardChainExecutor[T: ChainStage]:
     def copy(self) -> "ForwardChainExecutor[T]":
         return ForwardChainExecutor(self.chain, self.current_index)
 
-    def next(self) -> "tuple[T, ForwardChainExecutor[T]] | None":
+    def next(self) -> "T | None":
         if 0 <= self.current_index < len(self.chain):
             stage = self.chain.get_stages(self.current_index)
             self.current_index += 1
-            return stage, self.copy()
+            return stage
         return None
 
 
 class ReverseChainExecutor[T: ChainStage]:
     def __init__(self, chain: Chain[T], current_index=-1) -> None:
         self.chain = chain
-        self.current_index = current_index
+        self.current_index = len(chain) - 1 if current_index == -1 else current_index
 
     def copy(self) -> "ReverseChainExecutor[T]":
         return ReverseChainExecutor(self.chain, self.current_index)
 
-    def next(self) -> "tuple[T, ReverseChainExecutor[T]] | None":
+    def next(self) -> "T | None":
         if 0 <= self.current_index < len(self.chain):
             stage = self.chain.get_stages(self.current_index)
             self.current_index -= 1
-            return stage, self.copy()
+            return stage
         return None
 
 

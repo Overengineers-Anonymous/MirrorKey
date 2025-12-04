@@ -5,87 +5,10 @@ import pytest
 from core.chain.chain import Chain
 from core.chain.controller import (
     ChainController,
-    ChainExecutor,
     ForwardChainExecutor,
     ReverseChainExecutor,
 )
 from core.interface.main import Interface
-
-
-class TestChainExecutor:
-    """Test cases for the ChainExecutor class."""
-
-    @pytest.fixture
-    def stage_class(self):
-        """Create a concrete ChainStage implementation."""
-
-        class ConcreteStage:
-            def __init__(self, name: str = "stage"):
-                self.name = name
-
-        return ConcreteStage
-
-    @pytest.fixture
-    def chain_with_stages(self, stage_class):
-        """Create a chain with multiple stages."""
-        chain = Chain(name="test_chain", stage_class=stage_class)
-        for i in range(5):
-            chain.add_stage(stage_class(f"stage{i}"))
-        return chain
-
-    def test_init_default(self, chain_with_stages):
-        """Test ChainExecutor initialization with defaults."""
-        executor = ChainExecutor(chain_with_stages)
-
-        assert executor.chain is chain_with_stages
-        assert executor.current_index == 0
-        assert executor.next_index == 1
-
-    def test_init_reverse(self, chain_with_stages):
-        """Test ChainExecutor initialization in reverse mode."""
-        executor = ChainExecutor(chain_with_stages, current_index=4, reverse=True)
-
-        assert executor.chain is chain_with_stages
-        assert executor.current_index == 4
-        assert executor.next_index == -1
-
-    def test_next_forward(self, chain_with_stages):
-        """Test forward iteration through chain."""
-        executor = ChainExecutor(chain_with_stages)
-
-        stage0 = executor.next()
-        assert stage0.name == "stage0"  # type: ignore
-        assert executor.current_index == 1
-
-        stage1 = executor.next()
-        assert stage1.name == "stage1"  # type: ignore
-        assert executor.current_index == 2
-
-    def test_next_returns_none_at_end(self, chain_with_stages):
-        """Test that next() returns None when reaching the end."""
-        executor = ChainExecutor(chain_with_stages, current_index=5)
-
-        result = executor.next()
-        assert result is None
-
-    def test_next_reverse(self, chain_with_stages):
-        """Test reverse iteration through chain."""
-        executor = ChainExecutor(chain_with_stages, current_index=4, reverse=True)
-
-        stage4 = executor.next()
-        assert stage4.name == "stage4"  # type: ignore
-        assert executor.current_index == 3
-
-        stage3 = executor.next()
-        assert stage3.name == "stage3"  # type: ignore
-        assert executor.current_index == 2
-
-    def test_next_reverse_returns_none_at_start(self, chain_with_stages):
-        """Test that reverse next() returns None when reaching the start."""
-        executor = ChainExecutor(chain_with_stages, current_index=-1, reverse=True)
-
-        result = executor.next()
-        assert result is None
 
 
 class TestForwardChainExecutor:
@@ -115,14 +38,12 @@ class TestForwardChainExecutor:
 
         assert executor.chain is chain_with_stages
         assert executor.current_index == 0
-        assert executor.next_index == 1
 
     def test_init_custom_index(self, chain_with_stages):
         """Test ForwardChainExecutor initialization with custom index."""
         executor = ForwardChainExecutor(chain_with_stages, current_index=2)
 
         assert executor.current_index == 2
-        assert executor.next_index == 1
 
     def test_forward_iteration(self, chain_with_stages):
         """Test complete forward iteration."""
@@ -164,21 +85,18 @@ class TestReverseChainExecutor:
 
         assert executor.chain is chain_with_stages
         assert executor.current_index == 4  # len(chain) - 1
-        assert executor.next_index == -1
 
     def test_init_explicit_negative_one(self, chain_with_stages):
         """Test ReverseChainExecutor initialization with -1."""
         executor = ReverseChainExecutor(chain_with_stages, current_index=-1)
 
         assert executor.current_index == 4  # len(chain) - 1
-        assert executor.next_index == -1
 
     def test_init_custom_index(self, chain_with_stages):
         """Test ReverseChainExecutor initialization with custom index."""
         executor = ReverseChainExecutor(chain_with_stages, current_index=2)
 
         assert executor.current_index == 2
-        assert executor.next_index == -1
 
     def test_reverse_iteration(self, chain_with_stages):
         """Test complete reverse iteration."""

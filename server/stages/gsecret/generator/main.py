@@ -133,10 +133,9 @@ class GeneratorGSecretExecutor(GSecretExecutor):
         self, key_id: str, token: Token, next: ForwardChainExecutor["GSecretExecutor"]
     ) -> Secret | GsecretFailure:
         """Retrieve a secret by its ID, pass through to next executor"""
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.get_secret_id(key_id, token, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.get_secret_id(key_id, token, next)
         return GsecretFailure(reason="Secret not found", code=404)
 
     def get_secret_key(
@@ -146,11 +145,10 @@ class GeneratorGSecretExecutor(GSecretExecutor):
         Retrieve a secret by its key, generate if not found.
         """
         # Try to get from chain
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
+        stage = next.next()
+        if stage:
             if not self.config.overwrite_existing:
-                result = stage.get_secret_key(key, token, next_executor.copy())
+                result = stage.get_secret_key(key, token, next.copy())
 
                 if not isinstance(result, GsecretFailure) or result.code != 404:
                     return result
@@ -159,7 +157,7 @@ class GeneratorGSecretExecutor(GSecretExecutor):
             write_secret = WriteSecret(key=key, secret=generated_value)
 
             # Try to write the generated secret
-            write_result = stage.write_secret(write_secret, token, next_executor.copy())
+            write_result = stage.write_secret(write_secret, token, next.copy())
 
             return write_result
 
@@ -175,10 +173,9 @@ class GeneratorGSecretExecutor(GSecretExecutor):
         next: ForwardChainExecutor["GSecretExecutor"],
     ) -> Secret | GsecretFailure:
         """Pass through write operations to next executor"""
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.write_secret(secret, token, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.write_secret(secret, token, next)
         return GsecretFailure(reason="Write operations not supported", code=501)
 
     def secret_updated(
@@ -190,10 +187,9 @@ class GeneratorGSecretExecutor(GSecretExecutor):
     ):
         """Handle secret update notifications in reverse chain"""
         # Pass to next executor in reverse chain
-        executor = next.next()
-        if executor:
-            stage, next_executor = executor
-            return stage.secret_updated(secrets, token_hash, priority, next_executor)
+        stage = next.next()
+        if stage:
+            return stage.secret_updated(secrets, token_hash, priority, next)
 
 
 class GeneratorGSecretStageBuilder(ChainStageBuilder[GSecretExecutor]):
