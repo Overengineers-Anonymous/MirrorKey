@@ -1,5 +1,4 @@
 ---
-
 name: Test
 
 on:
@@ -27,8 +26,8 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
-          cache: 'poetry'
+          python-version: "3.13"
+          cache: "poetry"
 
       - run: poetry install --no-interaction
 
@@ -45,14 +44,15 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
-          cache: 'poetry'
+          python-version: "3.13"
+          cache: "poetry"
 
       - run: poetry install --no-interaction
 
       - run: poetry run pytest --junitxml=junit/test-results.xml --cov=server --cov-report=xml:coverage.xml
 
       - uses: MishaKav/pytest-coverage-comment@v1
+        if: github.event_name == 'pull_request'
         with:
           pytest-xml-coverage-path: coverage.xml
           junitxml-path: junit/test-results.xml
