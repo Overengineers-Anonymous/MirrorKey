@@ -45,6 +45,9 @@ class TokenID(BaseModel):
             return False
         return self.token_id == value.token_id
 
+    def __hash__(self) -> int:
+        return hash(self.token_id)
+
 
 class Token(BaseModel):
     token: str
