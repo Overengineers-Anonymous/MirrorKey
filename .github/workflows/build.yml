@@ -54,5 +54,5 @@ jobs:
           # https://stackoverflow.com/a/77127188/5209106
           cache-from: |
             type=gha
-            type=gha,scope=main
+            type=gha
           cache-to: type=gha,mode=max
