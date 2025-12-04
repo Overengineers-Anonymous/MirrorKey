@@ -4,8 +4,7 @@ WORKDIR /app
 
 RUN pip install --no-cache-dir poetry poetry-plugin-export
 
-COPY ./pyproject.toml /app
-COPY ./poetry.lock /app
+COPY ./pyproject.toml ./poetry.lock /app/
 
 RUN poetry export --without-hashes -f requirements.txt --output requirements.txt
 
