@@ -111,6 +111,7 @@ async def write_secret(
     if isinstance(response, GsecretFailure):
         raise HTTPException(status_code=response.code, detail=response.reason)
 
+
 gsecret_plugin = plugin_manager.register_plugin(
     APIPlugin(
         name="gsecret",
