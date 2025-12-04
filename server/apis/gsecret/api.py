@@ -26,7 +26,7 @@ def get_first_executor(
     chain_executor: Annotated[
         ForwardChainExecutor[GSecretExecutor], Depends(get_chain_executor)
     ],
-) -> GSecretExecutor:
+) -> tuple[GSecretExecutor, ForwardChainExecutor[GSecretExecutor]]:
     """Dependency to get the first executor from the chain."""
     executor = chain_executor.next()
     if not executor:
@@ -53,12 +53,14 @@ def get_token(
 @router.get("/{chain}/key/{key}")
 async def get_secret(
     key: str,
-    chain_executor: Annotated[
-        ForwardChainExecutor[GSecretExecutor], Depends(get_chain_executor)
+    execution_bundle: Annotated[
+        tuple[GSecretExecutor, ForwardChainExecutor[GSecretExecutor]],
+        Depends(get_first_executor),
     ],
-    executor: Annotated[GSecretExecutor, Depends(get_first_executor)],
     token: Annotated[Token, Depends(get_token)],
 ):
+    executor, chain_executor = execution_bundle
+
     secret = executor.get_secret_key(key, token, chain_executor)
     if not secret:
         raise HTTPException(status_code=404, detail="Secret not found")
@@ -68,12 +70,13 @@ async def get_secret(
 @router.get("/{chain}/id/{key_id}")
 async def get_secret_by_id(
     key_id: str,
-    chain_executor: Annotated[
-        ForwardChainExecutor[GSecretExecutor], Depends(get_chain_executor)
+    execution_bundle: Annotated[
+        tuple[GSecretExecutor, ForwardChainExecutor[GSecretExecutor]],
+        Depends(get_first_executor),
     ],
-    executor: Annotated[GSecretExecutor, Depends(get_first_executor)],
     token: Annotated[Token, Depends(get_token)],
 ):
+    executor, chain_executor = execution_bundle
     secret = executor.get_secret_id(key_id, token, chain_executor)
     if not secret:
         raise HTTPException(status_code=404, detail="Secret not found")
@@ -83,12 +86,14 @@ async def get_secret_by_id(
 @router.post("/{chain}/write")
 async def write_secret(
     secret: WriteSecret,
-    chain_executor: Annotated[
-        ForwardChainExecutor[GSecretExecutor], Depends(get_chain_executor)
+    execution_bundle: Annotated[
+        tuple[GSecretExecutor, ForwardChainExecutor[GSecretExecutor]],
+        Depends(get_first_executor),
     ],
-    executor: Annotated[GSecretExecutor, Depends(get_first_executor)],
     token: Annotated[Token, Depends(get_token)],
 ):
+    executor, chain_executor = execution_bundle
+
     return executor.write_secret(secret, token, chain_executor)
 
 

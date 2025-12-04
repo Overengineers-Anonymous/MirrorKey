@@ -73,7 +73,8 @@ class BwsReadGSecretExecutor(GSecretExecutor):
 
         executor = next.next()
         if executor:
-            return executor.get_secret_id(key_id, token, next)
+            stage, next_executor = executor
+            return stage.get_secret_id(key_id, token, next_executor)
         return GsecretFailure(reason="Secret not found", code=404)
 
     def get_secret_key(
@@ -105,7 +106,8 @@ class BwsReadGSecretExecutor(GSecretExecutor):
             return GsecretFailure(reason=f"Unexpected error: {e!s}", code=500)
         executor = next.next()
         if executor:
-            return executor.get_secret_id(key, token, next)
+            stage, next_executor = executor
+            return stage.get_secret_id(key, token, next_executor)
 
         return GsecretFailure(reason="Secret not found", code=404)
 
@@ -122,7 +124,8 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         # This is a read-only executor, pass to next
         executor = next.next()
         if executor:
-            return executor.write_secret(secret, token, next)
+            stage, next_executor = executor
+            return stage.write_secret(secret, token, next_executor)
         return GsecretFailure(
             reason="Write operations not supported in BWS read-only mode", code=501
         )
@@ -134,8 +137,9 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         )
         executor = chain_controller.next()
         if executor:
-            executor.secret_updated(
-                secrets, token_hash, self.chain.get_stage_index(self), chain_controller
+            stage, next_executor = executor
+            stage.secret_updated(
+                secrets, token_hash, self.chain.get_stage_index(self), next_executor
             )
 
     def secret_updated(
@@ -150,7 +154,8 @@ class BwsReadGSecretExecutor(GSecretExecutor):
         # Just pass to next executor
         executor = next.next()
         if executor:
-            return executor.secret_updated(secrets, token_hash, priority, next)
+            stage, next_executor = executor
+            return stage.secret_updated(secrets, token_hash, priority, next_executor)
 
 
 class BwsReadGSecretStageBuilder(ChainStageBuilder[GSecretExecutor]):

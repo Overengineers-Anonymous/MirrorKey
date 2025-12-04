@@ -3,30 +3,36 @@ from core.interface.main import Interface
 from .chain import Chain, ChainStage
 
 
-class ChainExecutor[T: ChainStage]:
-    def __init__(self, chain: Chain[T], current_index=0, reverse=False) -> None:
+class ForwardChainExecutor[T: ChainStage]:
+    def __init__(self, chain: Chain[T], current_index=0) -> None:
         self.chain = chain
-        self.next_index = 1 if not reverse else -1
         self.current_index = current_index
 
-    def next(self) -> T | None:
+    def copy(self) -> "ForwardChainExecutor[T]":
+        return ForwardChainExecutor(self.chain, self.current_index)
+
+    def next(self) -> "tuple[T, ForwardChainExecutor[T]] | None":
         if 0 <= self.current_index < len(self.chain):
             stage = self.chain.get_stages(self.current_index)
-            self.current_index += self.next_index
-            return stage
+            self.current_index += 1
+            return stage, self.copy()
         return None
 
 
-class ForwardChainExecutor[T: ChainStage](ChainExecutor[T]):
-    def __init__(self, chain: Chain[T], current_index=0) -> None:
-        super().__init__(chain, current_index, reverse=False)
-
-
-class ReverseChainExecutor[T: ChainStage](ChainExecutor[T]):
+class ReverseChainExecutor[T: ChainStage]:
     def __init__(self, chain: Chain[T], current_index=-1) -> None:
-        if current_index == -1:
-            current_index = len(chain) - 1
-        super().__init__(chain, current_index, reverse=True)
+        self.chain = chain
+        self.current_index = current_index
+
+    def copy(self) -> "ReverseChainExecutor[T]":
+        return ReverseChainExecutor(self.chain, self.current_index)
+
+    def next(self) -> "tuple[T, ReverseChainExecutor[T]] | None":
+        if 0 <= self.current_index < len(self.chain):
+            stage = self.chain.get_stages(self.current_index)
+            self.current_index -= 1
+            return stage, self.copy()
+        return None
 
 
 class ChainController[T: ChainStage]:
