@@ -8,3 +8,8 @@ config = LoadedConfig.from_yaml(Path("mirrorkey.yml"))
 
 
 api = api_builder.build(FastAPI(), config)
+
+
+@api.get("/healthcheck")
+def healthcheck():
+    return {"status": "healthy"}
