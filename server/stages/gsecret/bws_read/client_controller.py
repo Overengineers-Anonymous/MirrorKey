@@ -23,6 +23,7 @@ class ApiRateLimiter:
     def delay(self) -> None:
         """delay needed to avoid rate limiting."""
         if self.max == 0:
+            time.sleep(self.min_delay)
             return
         time.sleep(max(self.min_delay, (self.window / (self.max) * 2)))  # 50% buffer
 
@@ -155,8 +156,8 @@ class BwsClient:
         return secrets
 
     def _sync_loop(self):
-        self.sync_rate_limiter.delay()
         while True:
+            self.sync_rate_limiter.delay()
             with self.sync_lock:
                 new_callbacks = self.sync_all.copy()
                 self.sync_all = []
@@ -177,7 +178,6 @@ class BwsClient:
                 continue  # Skip if no sync data
             for callback in self.sync_callbacks:
                 callback(self.token_hash, self._convert_secrets(secrets))
-            self.sync_rate_limiter.delay()
 
 
 class BwsClientController:
