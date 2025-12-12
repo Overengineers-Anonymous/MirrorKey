@@ -1,0 +1,34 @@
+chains:
+  - api: gsecret
+    name: bws_read
+    steps:
+      - name: bws_read
+  - api: gsecret
+    name: gen_rand
+    steps:
+      - name: generator
+        config:
+          generation:
+            length: 64
+            include_symbols: true
+      - name: cache
+      - name: rate_limiter
+      - name: bws_read
+      - name: bws_write
+        config:
+          project_ids:
+            - "b704bb20-493b-4a3d-b1eb-b3a9002be201"
+  - api: gsecret
+    name: gen_rand_simple
+    steps:
+      - name: generator
+        config:
+          generation:
+            length: 32
+      - name: cache
+      - name: rate_limiter
+      - name: bws_read
+      - name: bws_write
+        config:
+          project_ids:
+            - "b704bb20-493b-4a3d-b1eb-b3a9002be201"

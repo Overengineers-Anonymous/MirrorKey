@@ -1,15 +1,15 @@
-# MirrorKey
+# Dyrne
 
 > [!NOTE]
-> MirrorKey is currently in the early planning/implementation phase.
+> Dyrne is currently in the early planning/implementation phase.
 
 ## Concept
 
-MirrorKey will act as a local, offline mirror for your secret stores and password managers.
+Dyrne will act as a local, offline mirror for your secret stores and password managers.
 
 ### Components
 
-* secret-store - The core of MirrorKey. Handles storing secrets and responding to requests and, if necessary, routing requests to other components.
+* secret-store - The core of Dyrne. Handles storing secrets and responding to requests and, if necessary, routing requests to other components.
 * secret-fetcher - Handles fetching secrets from external services (Bitwarden Secrets Manager, 1Password, ...). Should also handle creating secrets? Probably needs a better name.
 * secret-generator - Generates secrets on demand according to user-defined complexity rules (uppers, lowers, numbers, specials, ...).
 

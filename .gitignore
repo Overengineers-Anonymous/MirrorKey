@@ -108,9 +108,8 @@ __pypackages__/
 
 ############################################
 # Project specific exclusions
-# (Keep config YAML tracked; do NOT ignore mirrorkey.yml)
 ############################################
 # Add any additional project-specific ignores below:
 # /server/temp/
 
-mirrorkey.yml
+dyrne.yml
